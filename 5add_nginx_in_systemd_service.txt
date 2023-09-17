@@ -1,0 +1,112 @@
+same for both ubuntu and centos
+
+
+Add nginx in systemd services.
+
+NGINX to run at all times, be restarted in case of a faliure (unexpected exit), and even survive server restarts.
+If nginx is down, your complete environment will be down if NGINX is acting as the frontend.
+
+login to ssh machine
+
+check if nginx is running or not
+
+ps -ef | grep nginx
+
+reboot the machine
+
+>reboot
+
+wait for 2 minutes, ssh again into the nginx
+
+now check the service
+
+ps -ef | grep nginx
+
+Oopss!! no more running, check on the ip, not running!
+
+We gotta fix it!!
+
+search for nginx init script or go to:
+
+1.https://www.nginx.com/resources/wiki/start/topics/examples/initscripts/
+2. go to systemd option
+------------------------------------------------------------------------
+
+3.Save the following file as /lib/systemd/system/nginx.service
+
+[Unit]
+Description=The NGINX HTTP and reverse proxy server
+After=syslog.target network-online.target remote-fs.target nss-lookup.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+PIDFile=/run/nginx.pid
+ExecStartPre=/usr/sbin/nginx -t
+ExecStart=/usr/sbin/nginx
+ExecReload=/usr/sbin/nginx -s reload --------> here s is used for sending the signal to the nginx process
+ExecStop=/bin/kill -s QUIT $MAINPID
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+-----------------------------------------------------------------------------
+We need to make some changes to this file before saving it:
+
+PIDFile=/run/nginx.pid
+ExecStartPre=/usr/bin/nginx -t
+ExecStart=/usr/bin/nginx
+-----------------------------------------------------------------------------
+
+check if nginx process is running now, if not do: nginx
+check the process again
+
+-----------------------------------------------------------------------------
+result of nginx -h:
+
+nginx version: x.x.x
+Usage: nginx [-?hvVtq] [-s signal] [-c filename] [-p prefix] [-g directives]
+
+Options:
+  -?,-h         : this help
+  -v            : show version and exit
+  -V            : show version and configure options then exit
+  -t            : test configuration and exit
+  -q            : suppress non-error messages during configuration testing
+  -s signal     : send signal to a master process: stop, quit, reopen, reload --> these operations run on master process of nginx
+  -p prefix     : set prefix path (default: /etc/nginx/)
+  -c filename   : set configuration file (default: /etc/nginx/nginx.conf)
+  -g directives : set global directives out of configuration file
+-----------------------------------------------------------------------------
+now stop and reload are most used signals
+
+stop -> stops the nginx --> nginx -s stop --> ps -ef | grep nginx --> no process running
+
+to start: systemctl start nginx --> systemctl status nginx --> process is running
+
+reload -> reloads the nginx configuration(nginx won't take the changes in nginx.conf until it is reloaded.)
+nginx -s reload
+-------------------------------------------------------------------------------
+
+
+now once you have saved the file:
+
+do: reboot
+
+check the ip, still not there?
+
+now ssh into machine and check 
+systemctl status nginx: It will show not loaded
+
+
+Nginx Service File: When you install Nginx, a systemd service file (often named nginx.service) is typically provided. This service file contains instructions for systemd, the init system used by many modern Linux distributions, on how to manage the Nginx service.
+systemctl enable nginx: When you run the systemctl enable nginx command, systemd creates a symbolic link from the appropriate location in the systemd configuration directories to the location of the Nginx service file.
+Automatic Startup: This symbolic link tells systemd to automatically start the Nginx service when the system boots up. It essentially sets up the system to recognize that Nginx should be part of the startup processes.
+
+systemctl enable nginx > this will create a symlink: /etc/systemd/system/multi-user.target.wants/nginx.service -> l/lib/systemd/system/nginx
+
+
+again reboot and this time check if status of nginx this time.
+
+
+It works!!!

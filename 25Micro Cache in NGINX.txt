@@ -1,0 +1,312 @@
+Caching static content, such as images, JavaScript and CSS files, 
+and web content that rarely changes is a relatively straightforward 
+process. 
+
+➤ Can we cache Dynamic Content too? 
+
+➤ Caching personalized content (that is, content customized for each 
+user by the server application) is generally not possible, because the 
+server’s response differs for every request for the same resource.
+
+➤ Dynamic Content - This Content can change unpredictably, but is not 
+personalized for each user (or is personalized using JavaScript on the client device).
+
+Examples of dynamic content suitable for caching include: 
+---------------------------------------------------------
+➤ The front page of a busy news or blog site, where new articles are posted every 
+few seconds 
+➤ An RSS feed of recent information 
+➤ The status page for a continuous integration (CI) or build platform 
+➤ An inventory, status, or fundraising counter 
+➤ Lottery results 
+➤ Calendar data 
+➤ Personalized dynamic content is generated on the client device, such as 
+advertising content or data (‘Hello, your name’) that is calculated using cookie 
+data.
+
+
+-------------------------------------------------------
+
+
+➤ Micro Caching is used to cache the dynamic content. 
+
+➤ Microcaching is a caching technique whereby content is cached for a 
+very short period of time. 
+
+➤ NGINX uses a persistent disk-based cache located somewhere in the 
+local file system. 
+ 
+        Dynamic Requeset      Store data     php-fpm process for req
+Web     ------------------>      NGINX       ------------------------->  php
+client  <------------------   in HTML page  <--------------------------  fpm-------------->DB
+        
+                                  |
+                                  |
+                             store data in local 
+                             disk for short time          
+                                   (it wont go to php again) 
+
+Dynamic Request Php-fpm process for req
+Request Processing
+Response Data
+Store Data in HTML Page
+Store Data in Local Disk 
+For short time caching
+Response HTML
+
+➤ FastCGI
+is a widely-used protocol for interfacing interactive 
+applications such as PHP with web servers such as NGINX.
+
+
+➤ The main advantage of FCGI is that it manages   multiple CGI 
+requests in a single process.
+ 
+➤ Under NGINX, the FastCGI content cache is declared using a 
+directive called fastcgi_cache_path in the top-level http{} 
+context, within the NGINX configuration structure. 
+
+➤ User can also add the fastcgi_cache_key which defines a key 
+(request identifier) for caching.
+
+➤ fastcgi_cache_path Directive Parameters - 
+--------------------------------------------
+➤ /var/cache/nginx – the path to the local disk directory for the cache. 
+
+➤ levels – defines the hierarchy levels of a cache, it sets up a two-level 
+directory hierarchy under /var/cache/nginx. 
+
+➤ keys_zone (name:size) – enables the creation of a shared memory 
+zone where all active keys and information about data (meta) are 
+stored. Note that storing the keys in memory speeds up the checking 
+process, by making it easier for NGINX to determine whether it’s a 
+MISS or HIT, without checking the status on disk. 
+
+➤ inactive – specifies the amount of time after which cached data that 
+are not accessed during the time specified get deleted from the cache 
+regardless of their freshness. 
+
+➤ max_size – specifies the maximum size of the cache.
+NGINX : Web-Server & Load Balancer
+
+
+➤ fastcgi_cache_key Directive Parameters - 
+------------------------------------------ 
+
+➤ NGINX uses them in calculating the key of a request. 
+Importantly, to send a cached response to the client, the 
+request must have the same key as a cached response. 
+
+➤ $scheme – request scheme, HTTP or HTTPS. 
+
+➤ $request_method – request method, usually “GET” or 
+“POST”. 
+
+➤ $host – this can be hostname from the request line, or 
+hostname from the “Host” request header field, or the server 
+name matching a request, in the order of precedence. 
+
+➤ $request_uri – means the full original request URI
+
+
+------------------------------------------------------------------------------------------------------------------------------
+vi /etc/nginx/nginx.conf
+
+
+events {
+worker_connections 1024;
+}
+
+http {
+   include mime.types;
+   
+server {
+  listen 80;            <--------------ip:80
+  server_name <IP Of Machine>;
+  root /bloggingtemplate/;
+  
+  index index.php index.html;
+  
+  location / {
+          try_files $uri $uri/ =404; 
+}
+  location ~\.php$ {
+        #pass php requests to the php-fpm service (fastcgi)
+        include fastcgi.conf;
+        fastcgi_pass unix:run/php/php7.2-fpm.sock;
+          
+}
+  }
+
+}
+
+nginx -s reload
+
+refresh the webpage
+
+
+let's add some dynamic content in our index.php file
+
+<h1> Today's Date : <?php echo date("l jS \of F Y"); ?> </h1>
+
+
+now open your website again
+
+you will see the date which is created using php functions, this content is dynamic, it is a php process, it is say valid for 24hrs
+-----------------------------------
+
+
+events {
+worker_connections 1024;
+}
+
+http {
+   include mime.types;
+      
+     fastcgi_cache_path /tmp/cache_nginx level=1:2 key_zone=ZONE_1:100m inactive=60m;
+     fastcgi_cache_key "$scheme$request_method$host$request_uri""
+   
+server {
+  listen 80;            <--------------ip:80
+  server_name <IP Of Machine>;
+  root /bloggingtemplate/;
+  
+  index index.php index.html;
+  
+  location / {
+          try_files $uri $uri/ =404; 
+}
+  location ~\.php$ {
+        #pass php requests to the php-fpm service (fastcgi)
+        include fastcgi.conf;
+        fastcgi_pass unix:run/php/php7.2-fpm.sock;
+ 
+        fast_cache ZONE_1; 
+        fast_cache_valid 200 60m;
+          
+    }
+  }
+
+}
+
+We can't hit multiple requests right now to test the cache, we need a tool for it
+
+Apache-bench is the solution for this: apt-get -y install apache2-utils
+
+yum install httpd-tools (for centos)
+
+
+ab -n 200 -c 20 http://ip:80/    (trying for 200 requests by making 20 connections)
+
+
+
+Now let us put some delay
+
+<?php sleep(1); ?>
+<h1> Today's Date : <?php echo date("l jS \of F Y"); ?> </h1>
+
+
+go to browser you will see a bit of delay
+
+
+now try with apache bench
+
+ab -n 200 -c 20 http://ip:80/
+
+This time it will take alot of time, say the request per second will go from 4000 to 4 just by adding a second of delay.
+
+
+SO WE NEED CACHING
+
+
+Now reload the nginx conig we had set: nginx -s reload (with the caching configuration added)
+
+
+ab -n 200 -c 20 http://ip:80/
+
+Now everytime you put this request it will improve the number of requests say it goes to 40persec in first then 1000persec and so on.
+
+
+these steps like gzip. caching can improve server speeds upto 80 percent
+
+
+
+We need to verify response is coming from cache or server
+
+
+events {
+worker_connections 1024;
+}
+
+http {
+   include mime.types;
+      
+     fastcgi_cache_path /tmp/cache_nginx level=1:2 key_zone=ZONE_1:100m inactive=60m;
+     fastcgi_cache_key "$scheme$request_method$host$request_uri";
+     add_header X-Cache $upstream_cache_status;
+
+   
+server {
+  listen 80;            <--------------ip:80
+  server_name <IP Of Machine>;
+  root /bloggingtemplate/;
+  
+  index index.php index.html;
+  
+  location / {
+          try_files $uri $uri/ =404; 
+}
+  location ~\.php$ {
+        #pass php requests to the php-fpm service (fastcgi)
+        include fastcgi.conf;
+        fastcgi_pass unix:run/php/php7.2-fpm.sock;
+ 
+        fast_cache ZONE_1; 
+        fast_cache_valid 200 60m;
+          
+    }
+  }
+
+}
+
+
+nginx -s reload
+
+curl -I https://ip
+
+X-Cache: MISS
+
+curl -I https://ip
+HIT
+
+curl -I https://ip
+HIT
+
+
+curl -I https://ip/index.php
+MISS
+
+
+curl -I https://ip/inde.php
+HIT
+
+
+
+-----------------------------------------------------
+cd /tmp
+ls
+
+here you will find some system created nginx folder
+
+cd /tmp/system_created_nginx_folder/tmp/cache_nginx
+
+ll
+
+now here each dir say 1 will have a child dir say 9d which will contain a key(hash)
+
+
+     fastcgi_cache_path /tmp/cache_nginx level=1:2 key_zone=ZONE_1:100m inactive=60m;
+     fastcgi_cache_key "$scheme$request_method$host$request_uri";
+
+
+this is where it is coming from level is 1:2 so a dir and child directory, then hash key is coming from $scheme$request_method$host$request_uri"

@@ -1,0 +1,130 @@
+By default nginx creates 2 log files:
+
+/var/log/nginx/access.log
+/var/log/nginx/error.log
+
+at first they are empty(if you want clean them completely do: > access.log)
+
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+
+}
+}
+
+nginx -s reload
+-----------
+
+check the logs
+signal process started
+
+--------------------
+open the ip:8081 on browser
+
+now check the logs:
+GET / HTTP/1.1 200        -------------> it first hit the root
+
+and then loads all the resources needed
+
+Time stamp, status code, complete request uri, protocol used, data, client who made that request, client version.
+
+--------------------------------------------------
+
+now hit a random uri, say ip:8081/doesntexist
+
+as 404 is a valid code, so access.log will get an entry of 404 as the uri doesn't exist
+and error.log will just contain the error.
+
+-------------------------------------------------
+if you make any error in nginx.conf and try to reload it.
+
+It will be registered in error.log file
+
+-------------------------------------------------
+
+Changing location of logs for a uri
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+       
+       location /userdata {
+                access_log /var/log/nginx/access_user.log;         -----> if we wan't to change access.log location for a ri
+                return 200 "User Data is published"
+       }
+
+
+
+  }
+}
+nginx -s reload 
+
+
+now do ip:8081/userdata
+
+tail -f /var/log/nginx/*
+
+
+you will see logs are coming in access_user.log this time.
+
+
+-------------------------------------------------
+To skip the logs:
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+       
+       location /userdata {
+                access_log off;         -----> to skip the logs set it to off.
+                return 200 "User Data is published"
+       }
+
+
+
+  }
+}
+
+
+Makes sense to keep a single error file and distributed access logs
+------------------------------------------------
+
+
+
+
+
+
+
+
+

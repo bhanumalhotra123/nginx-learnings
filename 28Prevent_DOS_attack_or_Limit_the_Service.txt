@@ -1,0 +1,182 @@
+➤ NGINX Rate Limit - It allows User to limit the amount of HTTP requests a user can make in a given period of time.
+
+➤ Rate limiting used for security purposes. For example, to slow down brute force password guessing attacks. 
+
+➤ To protect against DDoS attacks by limiting the incoming 
+request rate to a value typical for real users, and identify the targeted URLs.
+
+➤ NGINX rate limiting uses the leaky bucket algorithm, which is 
+widely used in telecommunications and packet-switched 
+computer networks to deal with burstiness when bandwidth is limited.
+(FIFO)
+If inflow will increase and outflow is low, server will not take all requests
+--------------------------------------------------------------------------------
+
+
+Tool used: siege
+----------------
+apt-get install siege
+
+
+curl -Ik https://ip/assets/js/custom.js (any file that has to be requested)
+
+siege -v -r 2 -c 5 https:/ip/assets/js/custom.js           (10 requests in total)
+
+on new terminal press top and then 1, you can see cpu usage and memory usage 
+
+
+siege -v -r 20 -c 500 https:/ip/assets/js/custom.js        
+
+
+cpu usage will go high
+
+
+siege -v -r 200 -c 500 https:/ip/assets/js/custom.js   
+
+try for more, this will hang your system if you don't have a limit.
+
+How do we apply rate limit?
+--------------------------------------------------------------------
+
+ events {
+worker_connections 1024;
+}
+
+http {
+   include mime.types;
+       limit_req_zone $binary_remote_addr           ----------------> this will limit the client(you can give server_name too which limits the server to take request but it isn't a great idea!)
+server {                                                              you can also define $request_uri zone=test_zone:10m rate=1r/s;
+  listen 443 ssl http2;                                    <--------------https port
+  server_name <IP Of Machine>;
+  
+  ssl_certificate /etc/nginx/ssl/self.crt;
+  ssl_certificate_key /etc/nginx/ssl/self.key;
+  
+  root /bloggingtemplate/;
+
+  location / {
+          limit_req zone=test_zone;
+          try_files $uri $uri/ =404; 
+ 
+   }
+  
+  }
+
+}
+
+
+nginx -s reload
+
+siege -v -r 2 -c 2 https://104.131.80.130/assets/js/custom.js
+
+only 1 request will be taken
+
+
+siege -v -r 2 -c 20 https://104.131.80.130/assets/js/custom.js
+
+only 1 request will be taken
+
+as these requests are made under a second only
+
+
+------------
+
+curl -Ik https://104.131.80.130/assets/js/custom.js
+success!
+
+curl -Ik https://104.131.80.130/assets/js/custom.js
+success!
+
+curl -Ik https://104.131.80.130/assets/js/custom.js
+success!
+
+curl -Ik https://104.131.80.130/assets/js/custom.js
+success!
+
+as this is low number of requests per sec, so it is getting successful
+
+-----------------
+but what if in case request is genuine
+
+
+
+events {
+worker_connections 1024;
+}
+
+http {
+   include mime.types;
+       limit_req_zone $binary_remote_addr           ----------------> this will limit the client(you can give server_name too which limits the server to take request but it isn't a great idea!)
+server {                                                              you can also define $request_uri zone=test_zone:10m rate=1r/s;
+  listen 443 ssl http2;                                    <--------------https port
+  server_name <IP Of Machine>;
+  
+  ssl_certificate /etc/nginx/ssl/self.crt;
+  ssl_certificate_key /etc/nginx/ssl/self.key;
+  
+  root /bloggingtemplate/;
+
+  location / {
+          limit_req zone=test_zone burst=5; -------> 6 requests per sec(will keep 5 requests in queue)
+          try_files $uri $uri/ =404; 
+ 
+   }
+  
+  }
+
+}
+
+nginx -s reload
+
+burst fixes the immediate rejection, but it is making server slow
+
+
+events {
+worker_connections 1024;
+}
+
+http {
+   include mime.types;
+       limit_req_zone $binary_remote_addr           ----------------> this will limit the client(you can give server_name too which limits the server to take request but it isn't a great idea!)
+server {                                                              you can also define $request_uri zone=test_zone:10m rate=1r/s;
+  listen 443 ssl http2;                                    <--------------https port
+  server_name <IP Of Machine>;
+  
+  ssl_certificate /etc/nginx/ssl/self.crt;
+  ssl_certificate_key /etc/nginx/ssl/self.key;
+  
+  root /bloggingtemplate/;
+
+  location / {
+          limit_req zone=test_zone burst=5 nodelay; -------> nodelay added
+          try_files $uri $uri/ =404; 
+ 
+   }
+  
+  }
+
+}
+
+nginx -s reload
+
+now use siege
+
+
+Location Block: This is like a special set of instructions for the main entrance of your website. It tells the server how to handle requests when people want to access the main page of your site.
+
+limit_req Directive: Think of this as a rule you're setting up to control how fast people can enter your website. It's like saying, "Hey, visitors, you can only come in at a certain rate."
+
+test_zone: This is like a memory area where the server keeps track of who's entering your website and how quickly. It's like a tally sheet for the number of people entering and how fast they're doing it.
+
+burst=5: Imagine a line at a store where people are waiting to enter. Burst means that if there's a little rush of people, the system allows a small group to enter quickly, like letting in 5 people together. After that, it slows down again.
+
+nodelay: Normally, when the store manager sees a line forming, they might hold people back for a moment to prevent crowding. But with "nodelay," people are allowed in right away, even if the line is forming, as long as they're within the burst limit.
+
+So, in simple terms, this configuration ensures that your website's main page is accessible to visitors at a controlled rate. It's like managing the flow of visitors to your website's front door to avoid overwhelming the server while still letting some people in quickly if there's a little rush.
+
+
+
+
+
+
+

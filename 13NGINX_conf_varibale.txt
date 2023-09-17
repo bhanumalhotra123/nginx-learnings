@@ -1,0 +1,118 @@
+Variables: NGINX configuration can hold the variable and NGINX variable can hold the String Value.
+
+➤ Set directive is used to assign variable in NGINX. 
+set $a "hello world";  
+
+   ➤ User can put conditional statements on basis of variables. 
+
+➤ Few Important inbuilt variables: 
+
+➤ $args - List of arguments on the request line. 
+➤ $body_bytes_sent - Number of bytes sent to the client. 
+➤ $bytes_received - Number of bytes received from a client.
+➤ $connection_requests - Current number of requests made via connection. 
+➤ $date_local - Current time in the local time zone.
+➤ $hostname - Host name . 
+➤ $nginx_version - Shows the nginx version
+
+
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+       root /bloggingtemplate/;
+
+       location = /contactUs {
+               return 200 "Hello! you are inside custom location!!!";
+       }
+       location ~* /contactUs {
+               return 200 "Hello! you are inside custom location- REGEX CASE INSENSITIVE MATCH!!!";
+       }
+       location /find {
+                return 200 "$hostname \n $args \n $connection_requests \n $nginx.version";
+}
+}
+
+nginx -t
+nginx -s reload
+
+------------------
+go to browser
+ip:8081/find
+
+ubuntu-custom-nginx
+
+1 ------------>no. of request
+1.19.1
+
+after refreshing 3 times.
+
+ubuntu-custom-nginx
+
+4
+1.19.1
+-----------------
+go to browser
+ip:8081/find?apikey=12345?name=bhanu
+
+ubuntu-custom-nginx
+apikey=12345?name=bhanu
+4
+1.19.1
+
+------------------------------------
+
+
+
+How we can put the condition on variable?
+-----------------------------------------
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+       root /bloggingtemplate/;
+     
+       if ( $arg_name == 'bhanu' ){
+               return 200 "yes, I am bhanu";
+       }
+
+
+       location = /contactUs {
+               return 200 "Hello! you are inside custom location!!!";
+       }
+       location ~* /contactUs {
+               return 200 "Hello! you are inside custom location- REGEX CASE INSENSITIVE MATCH!!!";
+       }
+       location /find {
+                return 200 "$hostname \n $args \n $connection_requests \n $nginx.version";
+}
+}
+
+
+
+nginx -t
+nginx -s reload
+
+refresh the webpage
+
+---------------
+ip:8081/?name=arya --> won't get the webpage
+ip:8081/?name=bhanu --> will get the correct result
+
+

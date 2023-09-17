@@ -1,0 +1,38 @@
+HTTP Request is send by client to Server to get the Data.
+ 
+➤ HTTP client sends an HTTP request to a server in the form of 
+a request message, which contains- 
+
+➤ A Request-line 
+➤ Zero or more header 
+➤ An empty line , indicating the end of the header fields 
+➤ Optionally a message-body 
+
+
+➤ Request-Line - 
+Request-Line begins with a method token, followed by the Request-URI and the protocol version. 
+GET /Resouce_URI/… HTTP/1.1
+---------------------------
+
+➤ Request Method: Request method indicates the method to be 
+performed on the resource identified by the given Request-URI. 
+
+➤ GET - Requests using GET should only retrieve data and should 
+have no other effect on the data. 
+➤ POST - A POST request is used to send data to the server, for 
+example, customer information, file upload, etc. using HTML forms. 
+➤ PUT - Replaces all the current representations of the target resource 
+with the uploaded content. 
+➤ DELETE - Removes all the current representations of the target 
+resource given by URI. 
+➤ CONNECT - Establishes a tunnel to the server identified by a given 
+URI.
+
+➤ Request-URI: Request method indicates the method to be performed 
+on the resource identified by the given Request-URI. 
+
+basically the path which we are hitting, for-ex:
+/signin
+/login
+/trending
+

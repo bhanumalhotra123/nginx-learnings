@@ -1,0 +1,130 @@
+Create two more machines(ubuntu for now)
+
+1. nginx-reverse-proxy-server   ex- ip ends with 205
+
+2. ubuntu-custom-nginx-server (brownie app running) 130
+
+3. ubuntu-application-php
+
+
+
+
+
+
+
+
+
+1. Update the Package Manager(on both the new servers)
+
+apt-get update 
+
+
+
+2. Download and Install the NGINX Server(on both the new servers)
+
+apt-get -y install nginx
+
+
+
+3. Install the Net-tools (Optional)(on both the new servers)
+
+apt-get install net-tools
+
+------------------------------------------------check if nginx is running on proxy server and check the ip by ifconfig and go on browser and place the ip
+
+
+Now we will go to the ubuntu-custom-nginx-server machine and 
+ 
+user www-data; <------= added this
+worker_processes auto;  <--- set on auto
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+worker_connections 1024    <---- this will make nginx process to handle 1024 I/O
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+        
+}
+}
+
+nginx -s reload
+ifconfig
+hit the ip you will get the website 
+----------------------------------PROXY PASS
+Now go to the reverse-proxy-server and open the nginx.conf in it and add the 
+
+server{
+        listen 80;
+        server_name ip_of_this_server_205;
+         
+        location = / {                                        <-----when someone hits on reverse proxy server root it is redirected to appserver_ip
+                proxy_pass https://ip_of_app_server;
+        }
+}
+nginx -s reload
+
+try the ip of reverse proxy now.
+
+tail -f /var/log/nginx/* on both machines         reverse server logs will show redirection and app-server will show that request is coming from reverse-server 
+
+----------------------------------------------------------------------------------
+3. Install php-fpm on any single Box.
+
+apt-get -y install php-fpm
+
+
+
+4. Configure the Nginx conf for PHP Machine.(find -name "*sock")
+
+user www-data;
+
+server{
+	listen 80;
+	server_name <IP Of Machine>;
+
+	index index.php index.html;
+
+	location ~\.php {
+		include fastcgi.conf;
+		fastcgi_pass unix:/run/php/<php fpm sock path>
+	}
+}
+
+cd /usr/share/nginx/html/
+ls ---> index.html
+
+index.php file content
+
+<?php phpinfo(); ?>
+
+
+
+5. Setup Reverse Proxy. Set-up the Nginx conf file.
+
+server {
+  listen 80;            <--------------ip:80
+  server_name <IP Of Machine>;
+
+  location /  {
+       proxy_pass http://<IP domain of First Application Server>;
+	}
+}
+
+server {
+  listen 8080;              <----------------ip:8080
+  server_name <IP Of Machine>;
+
+  location ~\.php  {
+       proxy_pass http://<IP domain of PHP Application Server>;
+	}
+}

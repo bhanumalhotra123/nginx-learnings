@@ -1,0 +1,36 @@
+
+Whenever we hit a url say: https://www.youtube.com
+request is sent from my browser --> youtube web-server --> you get the youtube dynamic page --> refresh --> different response (which show each time new request is sent(same happens even in case of static))
+
+
+
+
+➤ Hypertext Transfer Protocol (HTTP) is an application-level 
+protocol for distributed, collaborative, hypermedia 
+information systems.
+
+➤ HTTP is a TCP/IP based communication protocol, that is used 
+to deliver data (HTML files, image files, query results, etc.) on 
+the World Wide Web. 
+
+➤ HTTP specification specifies how clients' request data will be 
+constructed and sent to the server, and how the servers 
+respond to these requests.
+
+Basic Features 
+➤ HTTP is connectionless: HTTP client, i.e., a browser initiates an HTTP 
+request and after a request is made, the client waits for the response.
+ 
+➤ The server processes the request and sends a response back after which 
+client disconnect the connection. So client and server knows about each 
+other during current request and response only. Further requests are made 
+on new connection like client and server are new to each other. 
+
+➤ HTTP is media independent: Any type of data can be sent by HTTP as 
+long as both the client and the server know how to handle the data content.
+
+➤ HTTP is stateless: HTTP is connectionless and it is a direct result of HTTP 
+being a stateless protocol. The server and client are aware of each other only 
+during a current request. Afterwards, both of them forget about each other. 
+Due to this nature of the protocol, neither the client nor the browser can 
+retain information between different requests across the web pages

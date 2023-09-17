@@ -1,0 +1,102 @@
+NGINX and Apache both are web-servers and have their own 
+characteristics. 
+
+
+
+Architecture
+------------
+A: nrequest --> n process
+
+N: n requests --> 1 process, multiple threads
+
+
+A: a process breaks, 1 request is down
+N: a process breaks, crashes complete server
+
+A: good for low level traffic
+N: better for high traffic
+
+ 
+A: .htaaccess file have complete mapping of content with the url, suppose 1000 process are running, all read this file.CPU hike, Memory hike.
+N: not works like A and have caching model as well.
+
+Static content
+--------------
+N: performs 2.5X faster than A for static content, why? cause each request is running under single process.
+
+Dynamic Content
+---------------
+A: Dynamic content request --> php kind of process --> execute dynamic content within the webserver(no external component needed.)
+
+N: Dynamic content request is handled by external components (request --> NGINX --> external component --> NGINX --> requester) REVERSE PROXY.
+
+OS support
+----------
+A: Runs on all UNIX,Linux Windows
+N: Runs on several modern Unix-like systems, but for windows not that stable as for UNIX.
+
+Distriubted/Centralized Configuration
+--------------------------------------
+A: Allows additional configuration on a per-directory basis via .htaccess files.
+N: Doesn't allow additional configuration.
+
+Request Interpretation
+-----------------------
+A: pass file system location(.htaccess file, have complete )
+N: pass URI to interpret requests, faster
+
+To sum it up:
+
+Apache focuses on the exact location of files on its server using the path/file approach.
+Nginx focuses on the general topic of content using the URI approach.
+Uniform Resource Identifier.
+-------------------------------------------------------------------------
+
+Feature Module
+--------------
+A: 60 official dynamically loadable modules that can be turned on/off
+N: have 100s of 3rd party core modules(not dynamically loadable, need to include in library of nginx)
+   lightweight because of single resource.
+
+
+Flexibility
+-----------
+A: supports customization of we server through dynamic modules.
+N: not flexible enough to support dynamic modules.
+
+Security
+--------
+A: makes sure that all the website that runs on its server are safe 
+from any harm and hackers.Offers configuration tips for DDoS attack handling, as well as 
+the mod_evasive module for responding to HTTP DoS, DDoS, or brute 
+force attacks. 
+
+N: Better security with the smaller codebase.
+
+
+When Choose Apache over NGINX? 
+------------------------------
+➤ When needs .htaccess files, you can override system-wide 
+settings on a per-directory basis. 
+
+➤ In a shared hosting environment, Apache works better 
+because of its .htaccess configuration. 
+➤ In case of functionality limitations – use Apache 
+
+
+➤ When Choose NGINX over Apache? 
+--------------------------------
+➤ Fast Static Content Processing 
+➤ Great for High Traffic Websites
+
+
+
+Use Both of them -Together ?(A & N) 
+--------------------------
+
+➤ User can use Nginx in front of Apache as a server proxy. 
+
+
+➤ For static connections, Nginx will serve the files quickly to the clients. For dynamic 
+content, for example, Php files, Nginx reverse proxy server will proxy their request
+to Apache which can then process their results and return their rendered page.

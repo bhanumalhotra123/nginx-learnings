@@ -1,0 +1,146 @@
+Caching management at browser side
+
+
+➤ Client Caching - We will learn how all browsers (and even 
+many non-browser HTTP clients) support client-side caching. 
+
+➤ Web servers do not control client-side caching to full extent, 
+obviously, but they may issue recommendations about what 
+to cache and how, in the form of special HTTP response 
+headers. 
+
+➤ Cache-control Header : This is the most important header to 
+set as it effectively ‘switches on’ caching in the browser.
+
+➤ Without this header the browser will re-request the file on each subsequent request.
+
+➤ Cache Header Value - 
+➤ Public - public resources can be cached not only by the enduser’s browser but also by any intermediate proxies that may 
+be serving many other users as well. 
+Cache-Control:public 
+--------------------
+
+➤ Private - private resources are bypassed by intermediate 
+proxies and can only be cached by the end-client. 
+Cache-Control:private 
+---------------------
+
+➤ max-age - Indicating the maximum amount of time it can be 
+cached before considered stale. This value sets a timespan for 
+how long to cache the resource (in seconds). 
+
+Cache-Control:public, max-age=31536000
+---------------------------------------
+
+
+➤ Expires - When accompanying the cache-control header, 
+Expires simply sets a date from which the cached resource 
+should no longer be considered valid.
+
+➤ From this date forward the browser will request a fresh copy 
+of the resource. Until then, the browsers local cached copy 
+will be used. 
+
+➤ If both Expires and max-age are set max-age will take precedence
+                                      --------
+user www-data;
+worker_processes auto;
+
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+worker_connections 1024;
+}
+
+http {
+
+server {
+  listen 80;            <--------------ip:80
+  server_name <IP Of Machine>;
+   
+  root /bloggingtemplate/;
+
+  location = /port.jpg {
+           return 200 "Hello This is Dummy Location"
+   }
+
+}
+
+}
+---------------------------
+curl -I http://ip/port.jpg
+
+You won't find cache control and max age yet 
+
+
+
+
+
+  location = /port.jpg {
+           return 200 "Hello This is Dummy Location";
+           add_header my_header "dummy value";
+
+nginx -s reload
+
+
+curl -I http://ip/port.jpg
+
+Now, you will get one more value as:  my_header: dummy value
+--------------------------------------------------
+
+
+
+  location = /port.jpg {
+           return 200 "Hello This is Dummy Location";
+           add_header my_header Cacje-Control public;
+           add_header Pragma public;             ---------> legacy copy of cache control,good for old websites
+           add_header Vary Accept-Encoding;
+           expires 6M;
+
+
+     }
+
+nginx -s reload
+
+
+curl -I http://ip/port.jpg
+In result you will Cache-Control: public and Exipers date, and Cache-Control: max-age=5184000 is calculated on the basis of expires.
+
+
+----------------------------------------------------------------------
+now for general path
+
+
+  location ~* \.(css|js|jpg|peg|png) {
+           return 200 "Hello This is Dummy Location";
+           add_header my_header Cacje-Control public;
+           add_header Pragma public;             ---------> legacy copy of cache control,good for old websites
+           add_header Vary Accept-Encoding;
+           expires 6M;
+
+
+     }
+
+nginx -s reload
+
+
+tail -f /var/log/nginx/access.log
+
+Now if you try to hit this:
+curl -I  http://ip/assets/js/jsquery.js
+
+
+you will get all the values as we are hitting js extension which is there in our config.
+
+In result you will have Cache-Control: public and Cache-Control: max-age=5184000, expiry date
+
+
+
+----------------------------------------------------------------------------------------------
+Now if you only hit: curl -I http://ip
+
+You won't get the headers!!
+
+
+
+

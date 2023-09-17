@@ -1,0 +1,138 @@
+➤ Return & Rewrite: Both for one of two purposes- 
+
+➤ First, if a URL has changed. 
+➤ To control the request within Nginx. 
+For example, a request can be forwarded to an application if the content will be generated dynamically. 
+
+➤ Return Directive - Return is the simpler directive to use compared to NGINX rewrite. 
+➤ Return must be enclosed within a server or location block which defines which URLs should be rewritten. 
+
+
+server {
+ listen 80;
+ server_name www.old-website.com;
+ return 301 $scheme://www.new-website.com$request_uri;
+}
+
+
+➤ Rewrite Directive - This directive needs to be in a location or server block in order to rewrite the URL. 
+
+➤ Rewrite directive can be used to perform more granular tasks as with it you can 
+perform more complicated URL distinctions such as: 
+
+➤ Capture elements in the original URL 
+
+➤ Change or add elements in the path 
+
+➤ Syntax : rewrite regex URL [flag];
+
+➤ Rewrite directive does not send a redirect to the client in all cases. If the 
+rewritten URL matches with another following directive, Nginx will rewrite the 
+URL again.
+
+➤ A rewrite directive will only return an HTTP 301 or 302 status code. If another 
+status code is required, a return directive is needed after the rewrite directive.
+
+
+----------------------------------------------------------------
+do: tail -f /var/log/nginx/*
+do: vi /etc/nginx/nginx.conf
+
+cd /bloggingtemplate/assets/images/about
+
+here you have your jpg files
+
+do: ip:8081/assets/images/about/welcome-banner.jpg ------> here you will get the image but problem is whole path is visible!
+---------------------------------------------------------------
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+       root /bloggingtemplate/;
+     
+       if ( $arg_name == 'bhanu' ){
+               return 200 "yes, I am bhanu";
+       }
+
+       location = /welcome {
+               return 301 /assets/images/about/welcome-banner.jpg;
+
+       location = /contactUs {
+               return 200 "Hello! you are inside custom location!!!";
+       }
+       location ~* /contactUs {
+               return 200 "Hello! you are inside custom location- REGEX CASE INSENSITIVE MATCH!!!";
+       }
+       location /find {
+                return 200 "$hostname \n $args \n $connection_requests \n $nginx.version";
+}
+}
+
+
+nginx -t
+nginx -s reload
+
+do: ip:8081/welcome --> now you will get the same result
+
+check logs --> tail -f /var/logs/nginx/* --> you will see 301(redirected)
+-------------------------------------------------------------------------
+
+now if you go to the full path i.e ip:8081/assets/images/about/welcome-banner.jpg
+It will still load and expose the whole path
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+       root /bloggingtemplate/;
+     
+       if ( $arg_name == 'bhanu' ){
+               return 200 "yes, I am bhanu";
+       }
+        
+       rewrite ^/guest/\w+ /welcome; <--------------------- any word after /guest 
+       
+       rewrite ^/user/(\w+) /welcome/$1;
+       
+       location /welcome/bhanu{
+                return 307 "This is bhanu";          
+       }
+       location = /welcome { 
+               return 301 /assets/images/about/welcome-banner.jpg;       
+
+       location = /contactUs {
+               return 200 "Hello! you are inside custom location!!!";
+       }
+       location ~* /contactUs {
+               return 200 "Hello! you are inside custom location- REGEX CASE INSENSITIVE MATCH!!!";
+       }
+       location /find {
+                return 200 "$hostname \n $args \n $connection_requests \n $nginx.version";
+}
+}
+nginx -t 
+nginx -s reload
+
+now do: ip:8081/guest/tom
+ip:8081/guest/tommmy or anything similar
+
+it will redirect this to: /assets/images/about/welcome-banner.jpg
+
+
+now say you hit: ip:8081/welcome/banner  ---> will give you welcome page
+                 ip:8081/user/bhanu ---> This is bhanu

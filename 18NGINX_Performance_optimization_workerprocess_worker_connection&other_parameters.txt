@@ -1,0 +1,271 @@
+NGINX 
+
+binary of nginx(started by user)is called master process ---> master starts worker process
+
+worker process works with client, master just handles it.
+
+default worker process are 1. 
+
+
+Do you need to change the number of worker process specificaly if applying same config to 2 systems?
+
+no you can use 'auto' identity
+
+
+➤ Worker Processes can be defined via directive 
+worker_processes. 
+
+➤ This directive is responsible for letting our virtual server 
+know how many workers to spawn once it has become bound 
+to the proper IP and port(s).
+
+➤ It is common practice to run 1 worker process per core CPU. 
+
+➤ Anything above 1 Process per CPU won’t hurt your system, 
+but it will leave idle processes usually just lying about.
+
+➤ Worker process directive belongs to Global Context. <------
+
+
+-----------------------------------------------------------------
+
+➤ Worker Connection: This directive tells our worker processes 
+how many people can simultaneously be served by Nginx.
+
+➤ This is the child of Events Context.  <------
+ 
+➤ The default value is 768; however, considering that every 
+browser usually opens up at least 2 connections/server, this 
+number can half.
+
+➤ User can check our core’s limitations by issuing a ulimit 
+command: 
+
+ulimit -n (number of operations a os can support)
+
+➤ worker_connections 1000 - This means, NGINX can server 
+1000 clients/second
+
+
+
+-----------------------------------------------
+
+ps -aux --forest |  grep nginx
+
+vi /etc/nginx/nginx.conf
+
+user www-data; <------= added this
+worker_processes 4;
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+ 
+       index index.php index.html;       <-------- whenever you are working with static/dynamic content(index is a directive), index.php for dynamic, index.html(present at root) for static
+     
+       location / {
+               try_files $uri $uri/ =404;
+       }
+       
+       location ~\.php$ {                <---------- for all the files which have .php extension, TO WORK WITH php we need dynamic process handling for which we need THE php we need fastcgi module.
+                include fastcgi.conf;
+                fastcgi_pass unix:/run/php/php7.2-fpm.sock;       <--------socket on which fastcgi and nginx can talk to each other  nginx(forwarding request) --> fastcgi  fastcgi(sending response) --> nginx
+       }
+}
+}
+
+
+nginx -s reload
+
+ps -aux --forest | grep nginx
+
+1 master 4 worker process 
+
+lscpu to check number of cpu, or use nproc or top
+
+
+if say it is 1 cpu havin g4 worker process ain't worth it.
+
+
+
+user www-data; <------= added this
+worker_processes auto;  <--- set on auto
+events {
+worker_connections 1024    <---- this will make nginx process to handle 1024 I/O
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+ 
+       index index.php index.html;       <-------- whenever you are working with static/dynamic content(index is a directive), index.php for dynamic, index.html(present at root) for static
+     
+       location / {
+               try_files $uri $uri/ =404;
+       }
+       
+       location ~\.php$ {                <---------- for all the files which have .php extension, TO WORK WITH php we need dynamic process handling for which we need THE php we need fastcgi module.
+                include fastcgi.conf;
+                fastcgi_pass unix:/run/php/php7.2-fpm.sock;       <--------socket on which fastcgi and nginx can talk to each other  nginx(forwarding request) --> fastcgi  fastcgi(sending response) --> nginx
+       }
+}
+}
+
+now it will have worker process as per system 
+
+say if 1 cpu --> 1 worker process
+    if 2 cpu --> 2 worker process
+
+use command ulimit -n for number of input/output operations
+
+
+
+[Bhanu.Malhotra@u-jbdom-111 ~] ulimit -n
+1024
+[Bhanu.Malhotra@u-jbdom-111 ~] lscpu
+Architecture:          x86_64
+CPU op-mode(s):        32-bit, 64-bit
+Byte Order:            Little Endian
+CPU(s):                2
+On-line CPU(s) list:   0,1
+Thread(s) per core:    1
+Core(s) per socket:    1
+Socket(s):             2
+NUMA node(s):          1
+---------------------------------------------------------------------------------------------
+
+
+Buffer --> Another aspect to manage the nginx performance.
+
+NGINX Process -----> RAM Memory
+       '--------> System Memory
+
+
+
+client --> POST Request ---> RAM Memory  ---(if not enough space in RAM)--> System Memory
+
+
+process of saving POST in RAM is called buffer, which we need to handle effeciently.
+
+If buffer size is low, nginx will write it to the system memory in a temp file causing the disk to read and write constantly.
+
+
+Causing slowness!!
+
+
+------------------------------------------------------------------------------------------
+➤ client_body_buffer_size: This handles the client buffer size, 
+meaning any POST actions sent to Nginx. POST actions are 
+typically form submissions. 
+
+➤ client_header_buffer_size: Similar to the previous directive, 
+only instead it handles the client header size. 
+
+
+➤ client_max_body_size: The maximum allowed size for a 
+client request. If the maximum size is exceeded, then Nginx 
+will spit out a 413 error or Request Entity Too Large. 
+
+➤ large_client_header_buffers: The maximum number and size of buffers for large client
+
+
+-----------------------------------------------------------------------------------------
+➤ Timeouts - 
+
+➤ client_body_timeout and client_header_timeout directives 
+are responsible for the time a server will wait for a client body 
+or client header to be sent after request. If neither a body or 
+header is sent, the server will issue a 408 error or Request 
+time out. 
+
+➤ keepalive_timeout assigns the timeout for keep-alive 
+connections with the client. Nginx will close connections with 
+the client after this period of time.
+
+
+
+➤ Gzip Compression - 
+---------------------
+➤ Gzip can help reduce the amount of network transfer Nginx deals with. However, be careful increasing the gzip_comp_level too high as the server will begin wasting cpu 
+cycles. 
+
+
+gzip              on; 
+gzip_comp_level   2; 
+gzip_min_length   1000; 
+gzip_types        text/plain application/x-javascript text/xml text/css application/xml;
+
+
+
+➤ Static File Caching - 
+
+➤ It’s possible to set expire headers for files that don’t change 
+and are served regularly. This directive can be added to the 
+actual Nginx server block.
+
+location ~* .(jpg|jpeg|png|gif|ico|css|js)$ { 
+expires 365d;                                     ---------> keeping all these files in nginx
+}
+
+-------------------------------------
+------------------------------------- sample file:
+
+user www-data;
+
+worker_processes auto;
+
+events {
+  worker_connections 1024;
+}
+
+http {
+
+  include mime.types;
+
+  # Buffer size for POST submissions
+  client_body_buffer_size 10K; 100; 100K; 100M;
+  client_max_body_size 8m;
+
+  # Buffer size for Headers
+  client_header_buffer_size 1k;
+
+  # Max time to receive client headers/body
+  client_body_timeout 12; 30s;
+  client_header_timeout 12; 45s;
+
+  # Max time to keep a connection open for
+  keepalive_timeout 15;
+
+  # Max time for the client accept/receive a response
+  send_timeout 10;
+
+  # Skip buffering for static files
+  sendfile on;
+
+  # Optimise sendfile packets
+  tcp_nopush on;
+
+
+  location ~* .(jpg|jpeg|png|gif|ico|css|js)$ {
+        expires 365d;
+  }
+
+  }
+}
+

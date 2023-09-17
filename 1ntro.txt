@@ -1,0 +1,65 @@
+Nginx Intro 
+
+Developed by Igor Sysoev(Russian)
+
+The C10K problem is the main reason why the next giant of the field, called Nginx, grabbed the stage. One fine morning in 1999, 
+Dan Kegel discovered the issue that all the traditional web servers were incapable of handling 10K concurrent clients/connections and named it the C10K problem.
+
+Open-Source in 2004
+
+NGINX and NGINX Plus can handle hundred of thousands of concurrent connections, and power more than 50% of the busiest sites on the web.
+
+NGINX is open source software for web serving, reverse proxying, caching, load balancing, media streaming, and more. 
+
+As HTTP server capabilities, NGINX can also function as a proxy server for email (IMAP, POP3, and SMTP) and a reverse proxy and load balancer for HTTP, TCP, and UDP servers.
+
+NGINX was created as Fastest Web-Server to serve the Concurrent 
+Large Number of Requests. 
+
+➤ NGINX is commonly used as a reverse proxy and load balancer to 
+manage incoming traffic and distribute it to slower upstream servers. 
+
+➤ NGINX Plus and NGINX are the best-in-class web server and 
+application delivery solutions used by high-traffic websites such as 
+Dropbox, Netflix. More than 400 million websites worldwide rely on 
+NGINX Plus and NGINX to deliver their content quickly, reliably, 
+and securely. 
+
+➤ As a software-only open source load balancer, NGINX is less 
+expensive and more configurable than hardware load balancers, and 
+is designed for modern cloud architectures
+
+➤ NGINX is a multifunction tool. With NGINX, user can use 
+the same tool as load balancer, reverse proxy, content cache, 
+and web server.
+
+➤ NGINX supports micro services to HTTP/2 protocols. 
+
+➤ NGINX is docker Friendly, which makes it first choice for 
+Cloud base Applications load Balancer. 
+
+➤ NGINX support N number of Open-Source third party 
+libraries which make it more flexible and expendable.
+
+ 
+
+
+
+
+
+Installation
+HTTP Protocol
+NginxLab
+Configuration
+Performance&Security
+Reverse Proxy
+Load Balancing
+Cache Management
+Static Assists
+Access Management
+Logging Management
+HTTP Compression
+Modular Architect
+Cryptography
+
+

@@ -1,0 +1,130 @@
+Template is there in the folder which contain this file.
+
+go to your machine
+
+ps -ef | grep nginx
+
+your process is running
+
+now say you have all the files for a website in a folder named bloggingtemplate
+
+do:  scp path_in_your_local_system username@ip/path_to_remote_path
+for now let us keep the remote location to root only(for ease)
+
+This will copy your folder to remote
+
+
+now do:
+ 
+cd /etc/nginx
+
+now let us first take the backup of conf file
+
+do: cp nginx.conf nginx_backup.conf
+
+vi nginx.conf
+
+
+events {
+}
+
+http { 
+    server{
+      
+       listen 80;
+       server_name ip_address/domain;
+       root /bloggingtemplate/;
+}
+}
+ 
+
+
+save this file
+now do: systemctl reload nginx or nginx -s reload         | here restart is not prefered as if there is some err in conf while starting up nginx may not comeup
+
+now do: nginx -t --> this is used to check if there is any error in nginx file[ALWAYS]
+
+now do: cat /var/logs/nginx/* --> to check the logs, most probably now it will show signal process started if reloaded fine
+
+now do: tail -f /var/log/nginx/*
+
+
+now go to the browser and check what you are getting on the ip, you will see only html is loaded. But css and anything else is not loaded, though you will see
+all the css files are going for 200 in logs.
+
+
+So what is the problem??      Our mistake!!
+
+go to server
+to check status of any css file:
+now do: curl -I http://ip_of_the_server/assets/css/bootsnav.css
+200 OK
+Content-Type: text/plain ------------> here is the problem 
+
+you can try for js files too the same problem.
+
+So, currently nginx is not understanding the file extension.
+
+
+events {
+}
+
+http { 
+        types{
+              text/html html;
+              text/css  css;
+       }
+     
+    server{
+      
+       listen 80;
+       server_name ip_address/domain;
+       root /bloggingtemplate/;
+}
+}
+
+after this addition, reload the nginx 
+do: nginx -s reload
+
+
+now it will be a lil better, but still js files are loaded as plain.
+
+so we have to define each and everything in conf file??
+
+NOPE!!
+
+We just need to define it in SUB-DIRECTORIES, and then define it in conf file.
+
+
+cat /etc/nginc/mine.types
+
+multiple types are defined under this file
+
+How do we include this in our nginx.conf?
+
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 80;
+       server_name ip_address/domain;
+       root /bloggingtemplate/;
+}
+}
+
+
+now do: nginx -s reload
+
+now go to browser: complete file will come this time!!!!!!(open in incognito if it is fetching old cache)
+
+
+------------you can change the port number as per your suitability-------------------
+different ports different things.
+
+

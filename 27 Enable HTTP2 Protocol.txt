@@ -1,0 +1,95 @@
+➤ The Evolution to HTTP/2:
+HTTP/1.1 served as the workhorse of the web for many years, but it had its limitations. 
+While it enabled websites to deliver content, it faced challenges in an era where websites were becoming more complex and resource-intensive. 
+As websites evolved to include numerous assets like images, stylesheets, scripts, and fonts, the limitations of HTTP/1.1 became more pronounced. 
+The requirement for multiple TCP connections per browser session to load various assets led to inefficiencies, increased latency, and reduced performance.
+
+1 resource per request in HTTP1
+
+
+➤ Addressing the Limitations with HTTP/2:
+Recognizing the need for an updated protocol that could handle the demands of modern web applications, the Internet Engineering Task Force (IETF) introduced HTTP/2 in February 2015. This new iteration aimed to overcome the limitations of HTTP/1.1 and enhance web performance through several key features.
+
+➤ Multiplexed Streams:
+One of the fundamental improvements in HTTP/2 is the ability to multiplex multiple streams within a single TCP connection. Unlike the sequential nature of HTTP/1.1, where only one request-response cycle could occur at a time per connection, HTTP/2 allows for the interleaved transmission of smaller frames, called streams. This capability significantly improves efficiency by reducing the overhead of opening and maintaining multiple TCP connections.
+
+➤ Server Push:
+HTTP/2 introduces the concept of server push, whereby the server can proactively send additional resources to the client that it anticipates the client will need. For instance, if a web page references several assets, the server can push those assets to the client before they are explicitly requested. This reduces the need for additional round trips, accelerating page load times and enhancing user experience.
+
+➤ Binary Protocol:
+HTTP/2 employs a binary protocol as opposed to the text-based protocol of HTTP/1.x. By using binary encoding for commands and data, HTTP/2 minimizes the overhead associated with textual parsing, resulting in more efficient data transmission. Additionally, binary protocols offer better security against attacks like response splitting, where malicious content could be injected into responses.
+
+➤ Stateful Header Compression:
+Another significant enhancement in HTTP/2 is stateful header compression using the HPACK specification. This approach efficiently compresses header information, reducing the amount of data transmitted and enhancing overall performance. Both the client and the server maintain a dynamic table of previously exchanged headers, optimizing the reusability of header data and further reducing redundancy.
+
+➤ Benefits of HTTP/2:
+---------------------
+The transition to HTTP/2 brings forth a range of benefits that collectively contribute to a better web experience:
+
+Web Performance: HTTP/2's multiplexing and server push capabilities lead to faster load times, reduced latency, and improved overall page performance.
+
+Mobile Web Performance: The efficiency gains of HTTP/2 are particularly beneficial for mobile devices, where network conditions may be less stable.
+
+Cheaper Internet: The optimization provided by HTTP/2 results in reduced data consumption, potentially leading to lower costs for users with metered data plans.
+
+Expansive Reach: Improved performance makes websites more accessible to users with varying network conditions, extending reach to a broader audience.
+
+Media Rich Experience: HTTP/2's efficiency is particularly advantageous for delivering media-rich content like images, videos, and interactive elements.
+
+Improved Technology Utilization: By maximizing network resources, HTTP/2 allows websites to utilize available bandwidth more effectively.
+
+Security: The transition to a binary protocol, along with other design improvements, enhances the security posture of HTTP communication.
+
+HTTP/2 Client Support: Leading web browsers, servers, and platforms have rapidly adopted support for HTTP/2, ensuring widespread compatibility and utilization.
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Setting up HTTP2
+
+nginx -V will give configuration nginx is running with   copy the config
+
+Now go to directory where you have extracted the nginx
+
+cd /root/nginx-1.19.1/
+
+./configure --help | grep 'http'
+
+Here you will find the module for http version 2
+which is  --with-http_v2_module
+
+now do: ./configure all the modules you had previously   --with-http_v2_module
+
+make 
+make install
+
+
+ps -ef | grep nginx 
+
+nginx -V (you will find nginx module is present)
+
+
+events {
+worker_connections 1024;
+}
+
+http {
+   include mime.types;
+server {
+  listen 443 ssl http2;                                    <--------------https port
+  server_name <IP Of Machine>;
+  
+  ssl_certificate /etc/nginx/ssl/self.crt;
+  ssl_certificate_key /etc/nginx/ssl/self.key;
+  
+  }
+
+}
+
+nginx -t
+
+nginx -s reload
+
+now go to browser and check any request in network tab, you will find HTTP2

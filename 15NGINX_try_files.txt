@@ -1,0 +1,153 @@
+➤ try_files: The try_files directive can be used to check whether the specified file or directory exists. 
+➤ NGINX makes an internal redirect if it does, or returns a 
+specified status code if it doesn’t
+
+
+
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+     
+       location /video {
+       return 200 "Enjoy the Movie!!";    
+       }
+        
+
+}
+}
+
+nginx -t
+nginx -s reload
+
+ip:8081/video --> Enjoy the Movie!!
+
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+       
+       try_files /testobject /video;     <--- first it checks for testobject if not found it goes to video.
+
+       location /video {
+       return 200 "Enjoy the Movie!!";    
+       }
+        
+
+}
+}
+
+
+nginx -s reload
+
+ip:8081/testobject ---> as testobject doesn't exist it will give the video (As the last is given if there is no match.)
+
+
+Enjoy the Movie!!
+-------------------------------------------------------------
+Now let us give a path that exists /assets/images/about/profile_image.jpg 
+In this case both the paths are valid !!
+
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+       
+       try_files /assets/images/about/profile_image.jpg  /video;     <--- first it checks for testobject if not found it goes to video.
+
+       location /video {
+       return 200 "Enjoy the Movie!!";    
+       }
+        
+
+}
+}
+
+
+nginx -s reload
+
+do: ip:8081/testobject or ip:8081/nothing     ---> it will just catch the first one i.e /assets/images/about/profile_image.jpg in this case
+
+It should first go for the uri that is mentioned, i.e testobject or nothing in this case. How do we resolve this:
+-------------------------------------------------------------------------------------
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+       
+       try_files $uri /assets/images/about/profile_image.jpg  /video;     <--- first it checks for testobject if not found it goes to video.
+
+       location /video {
+       return 200 "Enjoy the Movie!!";    
+       }
+        
+
+}
+}
+
+nginx -s reload 
+
+Now it will will hit the given uri path if it is correct if not it will go to the next.
+
+eg - ip:8081/index.html will load our website.
+
+-------------------------------------------------------------------------------
+
+It tries to 'match' all of them if they exist, if not it will hit the LAST one.
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+       
+       try_files /assets/file_doesn't_exist.jpg /video /404;     <--- first it checks for testobject if not found it goes to video.
+
+       location /video {
+       return 200 "Enjoy the Movie!!";    
+       }
+       location /404 {
+       return 404 "Sorry, this resource doesn't exist.";    
+       } 
+
+}
+}
+
+
+now try: curl -I http://ip/user/json        (as it won't be matched) ---> you will get 404 response.

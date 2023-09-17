@@ -1,0 +1,106 @@
+
+Go to any website and open network section and refresh the website and check the time to load, load and othervalues
+
+tranfered data is minimum as compared to resource in general:
+
+
+Access-Control-Allow-Origin:
+*
+Alt-Svc:
+h3=":443"; ma=86400
+Cache-Control:
+public,max-age=31536000,immutable
+Content-Length:
+95
+Content-Md5:
+OcEdZWIg79UvSWVADRSQCg==
+Content-Type:
+image/png
+Cross-Origin-Resource-Policy:
+cross-origin
+Date:
+Mon, 14 Aug 2023 06:43:43 GMT
+Document-Policy:
+force-load-at-top
+Expires:
+Thu, 08 Aug 2024 22:12:25 GMT
+Last-Modified:
+Mon, 01 Jan 2001 08:00:00 GMT
+Origin-Agent-Cluster:
+?0
+Permissions-Policy:
+accelerometer=(), ambient-light-sensor=(), bluetooth=(), camera=(), gyroscope=(), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), screen-wake-lock=(), serial=(), usb=()
+Priority:
+u=1,i
+Timing-Allow-Origin:
+*
+X-Content-Type-Options:
+nosniff
+X-Fb-Debug:
+2Tn7BEHRj0k/l/Msbuy9FkEYUST8xOliKZIMYKrU816wwwC2a//Jd0sv7B3VzeKVb9v8kD3rxBhPlpGWpjia3w==
+
+
+--------------------------------------------------------------------------------
+
+
+events {
+worker_connections 1024;
+}
+
+http {
+   include mime.types;
+   
+       gzip_on;
+       gzip_comp_level 4;         -----> if you keep it high, more resource will be used
+       gzip_types application/javascripttext/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;   ----> here we are not defining jpeg, png as they are already compresed, we will compress txt file as text get 50% compressed.
+
+server {
+  listen 80;            <--------------ip:80
+  server_name <IP Of Machine>;
+   
+  root /bloggingtemplate/;
+
+  location = /port.jpg {
+           return 200 "Hello This is Dummy Location"
+   }
+
+
+  location ~* \.(css|js|jpg|peg|png) {
+           return 200 "Hello This is Dummy Location";
+           add_header my_header Cacje-Control public;
+           add_header Pragma public;             ---------> legacy copy of cache control,good for old websites
+           add_header Vary Accept-Encoding;
+           expires 6M;
+
+
+     }
+
+
+
+}
+
+}
+
+nginx -s reload
+
+now go to browser and check the network tab,you will see transmitted is lower than resource
+
+
+now if we curl this through cli and not the browser we will see that we won't get configuraton for compression layed out.(as broswer handles the headers)
+curl -H "Accept-Encoding: gzip, deflate" -I http://ip/assets/js/jquery.js
+
+Content-Encoding
+: gzip
+➤ How fast a website will load depends on the size of all of the 
+files that have to be downloaded by the browser. 
+
+➤ Reducing the size of files to be transmitted can make the 
+website not only load faster, but also cheaper to those who 
+have to pay for their bandwidth usage. 
+
+➤ Response files can be minimise by configure Nginx to use gzip 
+to compress files it serves on the fly. 
+
+➤ Compressing files use up server resources, so it is best to 
+compress only those files that will reduce its size considerably 
+in result

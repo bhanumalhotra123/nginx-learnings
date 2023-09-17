@@ -1,0 +1,159 @@
+first let us see how many modules are there for nginx
+
+A folder is created at /etc/nginx location if handcrafted modules are created named modules.
+
+
+we need to see how to add now!!
+
+first check the config nginx was launched with
+
+
+nginx -V
+
+configure arguments: --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-prce --pid-path=/var/run/nginx.pid --with-http_ssl_module 
+
+copy this
+
+
+now do: cd /root/
+then do: ls --> this will show you nginx tar file and nginx dir which we have used earlier
+
+go to nginx folder:
+
+forex: cd /nginx-1.19.1.tar.gz 
+
+
+need to check how many dynamic modules are there in this config
+
+inside nginx dir do: ./configure --help | grep dynamic
+
+
+it will show all the dynamic modules
+
+
+Now inside nginx directory only:
+To add 1 more module to the config: here we are trying to add image_filter module
+
+./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-prce --pid-path=/var/run/nginx.pid --with-http_ssl_module 
+--with-http_image_filter_module=dynamic --modules-path=/etc/nginx/modules 
+
+
+when you run this it will give you an error that gdlib is not there(image_filter needs it)
+
+apt-get install libgd-dev -y
+
+./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-prce --pid-path=/var/run/nginx.pid --with-http_ssl_module 
+--with-http_image_filter_module=dynamic --modules-path=/etc/nginx/modules 
+
+this time it will work!
+
+now do: make
+then do: make install      ----> this will install new module
+
+
+ps -ef | grep nginx 
+
+to check for new module:
+
+nginx -V
+
+new module will be listed
+
+
+cd/etc/nginx
+ls ---> module folder exists now
+
+----------------------------------
+
+nginx.conf
+
+
+
+user www-data; <------= added this
+worker_processes auto;  <--- set on auto
+events {
+worker_connections 1024    <---- this will make nginx process to handle 1024 I/O
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+ 
+       index index.php index.html;       <-------- whenever you are working with static/dynamic content(index is a directive), index.php for dynamic, index.html(present at root) for static
+     
+       location / {
+               try_files $uri $uri/ =404;
+       }
+       
+       location ~\.php$ {                <---------- for all the files which have .php extension, TO WORK WITH php we need dynamic process handling for which we need THE php we need fastcgi module.
+                include fastcgi.conf;
+                fastcgi_pass unix:/run/php/php7.2-fpm.sock;       <--------socket on which fastcgi and nginx can talk to each other  nginx(forwarding request) --> fastcgi  fastcgi(sending response) --> nginx
+       }
+       location = /assets/images/about/welcome-banner.jpg
+                image_filter rotate 180                                   <-------------- go to nginx.org/en/docs/http/ngx_http_image_filter_module.html
+
+       }
+}
+}
+
+nginx -t
+
+unkwon directive error
+----------------------------------------
+
+Inside the the global context place it
+
+
+user www-data; <------= added this
+worker_processes auto;  <--- set on auto
+load_module /etc/nginx/modules/ngx_http_image_filter_module.so;
+
+events {
+worker_connections 1024    <---- this will make nginx process to handle 1024 I/O
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+ 
+       index index.php index.html;       <-------- whenever you are working with static/dynamic content(index is a directive), index.php for dynamic, index.html(present at root) for static
+     
+       location / {
+               try_files $uri $uri/ =404;
+       }
+       
+       location ~\.php$ {                <---------- for all the files which have .php extension, TO WORK WITH php we need dynamic process handling for which we need THE php we need fastcgi module.
+                include fastcgi.conf;
+                fastcgi_pass unix:/run/php/php7.2-fpm.sock;       <--------socket on which fastcgi and nginx can talk to each other  nginx(forwarding request) --> fastcgi  fastcgi(sending response) --> nginx
+       }
+       location = /assets/images/about/welcome-banner.jpg
+                image_filter rotate 180                                   <-------------- go to nginx.org/en/docs/http/ngx_http_image_filter_module.html
+
+       }
+}
+}
+
+
+nginx -t
+nginx -s reload
+
+
+ip/assets/images/about/welcome-banner.jpg -----> you will find the file rotated 180
+
+
+
+

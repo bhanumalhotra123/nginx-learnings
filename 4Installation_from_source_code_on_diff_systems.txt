@@ -1,0 +1,74 @@
+Installing nginx with custom modules using source code
+------------------------------------------------------
+(you will notice after completion that UI of nginx page is same in both the cases as it takes index.html from source code, if you install it otherwise it is different for different system)
+
+
+Create a ubuntu machine and centos machine
+
+
+login to both machines using ssh
+
+
+1. ubuntu
+a)sudo apt-get update -y
+b)go to nginx.org > click on download option > then copy the link for mainline version
+c) wget copied_link
+d) ls ---> you can see a file being downloaded
+e) tar -zxvf file_name
+f) you will find the extracted directory here
+g) cd into extracted directory
+h) do ls --> will get a file named configure
+i) run  ./configure (will get an error, C compiler cc is not found)
+j) install compiler: apt-get install build-essential -y 
+k) run ./configure (error asking needs PCRE library)
+l) apt-get install libpcre3 libpcre3-dev zlibg zlib1g-dev libssl-dev make
+m) now run ./configure, this time it will work. Now all the modules required are there but need some more parameters
+n) go to nginx.org > select documentation > buiding nginx from sources > you will see different flags
+o) Execute configuration again
+./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-pcre --
+pid-path=/var/run/nginx.pid --with-http_ssl_module
+
+when you run this Makefile will be created inside the objs
+
+Compile and install Nginx
+p)make
+q)make install
+
+r) nginx -v
+s) to start > nginx
+t) ps -ef | grep nginx
+u) ifconfig
+v) check on browser using 
+
+
+2. centos
+a)sudo yum update -y(may take 4-5 mins)
+b)yum install wget -y
+c)go to nginx.org > click on download option > then  copy the link for mainline version
+d)wget copied_link
+d) ls ---> you can see a file being downloaded
+e) tar -zxvf file_name
+f) you will find the extracted file here
+h) do ls --> will get a file named configure
+i) run  ./configure (will get an error, C compiler cc is not found)
+j) install compiler: yum groupinstall "Development Tools" -yk) run ./configure (error asking needs PCRE library)
+k) run ./configure (error asking needs PCRE library)
+l) yum install libpcre3 pcre-devel zlibg zlib1g-dev libssl-dev make  -y
+k) run ./configure (error asking needs PCRE library)
+l) apt-get install libpcre3 libpcre3-dev zlibg zlib1g-dev libssl-dev make
+m) now run ./configure, this time it will work. Now all the modules required are there but need some more parameters
+n) go to nginx.org > select documentation > buiding nginx from sources > you will see different flags
+o) Execute configuration again
+./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-pcre --
+pid-path=/var/run/nginx.pid --with-http_ssl_module
+
+when you run this Makefile will be created inside the objs
+
+Compile and install Nginx
+p)make
+q)make install
+r) nginx -v
+s) to start > nginx
+t) ps -ef | grep nginx
+u) ifconfig
+v) check on browser using 

@@ -1,0 +1,101 @@
+Secure Sockets Layer (SSL) is a standard security technology used to establish an encrypted and secure connection between a server and a client, commonly seen between a web server (website) and a browser, or between a mail server and a mail client.
+
+SSL as a Security Protocol:
+SSL operates as a cryptographic protocol that ensures the confidentiality, integrity, and authenticity of data transmitted between the server and the client. 
+It prevents eavesdropping, data tampering, and forgery by encrypting the information being exchanged.
+
+Browser SSL Capabilities:
+Web browsers play a crucial role in supporting SSL. 
+They provide the capability to initiate SSL connections with web servers and interpret the encryption for users.
+When you access a website, your browser checks whether the website's SSL certificate is valid and encrypts the data exchanged, giving you a secure browsing experience.
+
+How SSL Creates a Secure Connection:
+-----------------------------------
+Client Hello: The process begins when a client (usually a browser) connects to a server that supports SSL. 
+The client sends a "Client Hello" message, which includes the list of cryptographic algorithms it supports and a random value.
+
+Server Hello: The server responds with a "Server Hello" message, selecting one of the client's proposed algorithms and sharing its own random value. 
+Additionally, the server sends its SSL certificate to the client, proving its identity.
+
+Certificate Verification: The client verifies the authenticity of the server's SSL certificate. 
+This involves checking the certificate's validity, expiration date, and the issuing authority's legitimacy. 
+If everything is in order, the client proceeds.
+
+Key Exchange: The client generates a pre-master secret key and encrypts it using the server's public key from the SSL certificate. 
+The server then decrypts the pre-master secret using its private key.
+
+Session Key Generation: Both the client and server independently use the random values exchanged earlier, along with the pre-master secret, to compute a session key. 
+This key will be used for encrypting and decrypting the data during the session.
+
+Data Encryption: With the session key established, both client and server switch to using symmetric encryption for data transmission. 
+This encryption ensures that any data sent between them remains confidential and protected from unauthorized access.
+
+Secure Data Exchange: The client and server now engage in secure data exchange, where all the information transmitted between them is encrypted using the session key.
+ This prevents malicious actors from intercepting and understanding the data
+
+Connection Closure: Once the session is complete, either the client or the server can initiate the secure connection's closure. 
+This involves exchanging messages to gracefully terminate the SSL connection.
+
+
+
+Client                                             Server
+
+  | --- Client Hello (Supported Algos) ----> |
+
+  | <--- Server Hello (Selected Algo) ----  |
+
+  | <--- Server Certificate, Public Key --- |
+
+  | --- Verify Certificate, Generate Pre-Master Key ---> |
+
+  | <--- Encrypted Pre-Master Key using Server's Public Key --- |
+
+  | --- Generate Session Key (Client and Server) ---> |
+
+  | --- Secure Data Exchange using Session Key ---> |
+  | <--- Secure Data Exchange using Session Key --- |
+
+  | --- Terminate Connection ---> |
+
+
+Now with the current nginx config if you go to the browser, you will notice it shows (Not Secure) in the bar where you place the ip.
+
+next is you go to network tab and select any file, you will see it uses http in request URL
+
+cd /etc/nginx
+mkdir -p ssl
+
+
+To create ssl certificate by yourself:
+---------------------------------
+
+in the ssl directory only do:
+
+openssl req -x509 -days 100 -nodes -newkey rsa:2048 -keyout /etc/nginx/ssl/slef.key --out /etc/nginx/ssl/self.cert
+after this it will ask you some general questions
+
+and now in ssl folder you will have slef.key and self.crt
+
+
+events {
+worker_connections 1024;
+}
+
+http {
+   include mime.types;
+server {
+  listen 443;                                      <--------------https port
+  server_name <IP Of Machine>;
+  
+  ssl_certificate /etc/nginx/ssl/self.crt;
+  ssl_certificate_key /etc/nginx/ssl/self.key;
+  
+  }
+
+}
+
+now go to browser and use https://ip this time 
+
+
+You may get error on google chrome, you can use any other browser. It will not happen if you purchase it.
+

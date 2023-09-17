@@ -1,0 +1,227 @@
+at your machine
+
+
+
+1. apt-get install
+2. apt-get install php-fpm -y
+
+when you do this php is added to the systemd by itself
+
+
+3. systemctl status php7.2-fpm  <--- your version here
+
+4. ps -aux | grep php
+
+1 master process with root user
+2 worker process with www user
+
+vi /etc/nginx/nginx.conf
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+ 
+       index index.php index.html;       <-------- whenever you are working with static/dynamic content(index is a directive), index.php for dynamic, index.html(present at root) for static
+
+}
+}
+
+
+
+
+go to ip in browser
+
+index.html is loaded as in bloggingtemplate folder only index.html is present
+
+
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+ 
+       index index.php index.html;       <-------- whenever you are working with static/dynamic content(index is a directive), index.php for dynamic, index.html(present at root) for static
+     
+       location / {
+               try_files $uri $uri/ =404;
+}
+}
+
+nginx -s reload
+
+go to browser
+
+ip  --> you get the website
+
+ip/test --> 404
+
+----------------------------------------
+
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+ 
+       index index.php index.html;       <-------- whenever you are working with static/dynamic content(index is a directive), index.php for dynamic, index.html(present at root) for static
+     
+       location / {
+               try_files $uri $uri/ =404;
+       }
+       
+       location ~\.php$ {                <---------- for all the files which have .php extension, TO WORK WITH php we need dynamic process handling for which we need THE php we need fastcgi module.
+                include fastcgi.conf;
+                fastcgi_pass unix:/run/php/php7.2-fpm.sock;       <--------socket on which fastcgi and nginx can talk to each other  nginx(forwarding request) --> fastcgi  fastcgi(sending response) --> nginx
+       }
+}
+}
+
+
+
+cd bloggingtemplate
+
+vi info.php
+
+<?php phpinfo(); ?>
+
+save this file
+
+
+nginx -t
+
+nginx -s reload
+
+
+now go to browser: ip/info.php
+
+
+502 bad gateway! It is not 404 so resource is available, nginx and php process is not able to communicate.
+
+
+check tail -10f /var/log/nginx/error.log
+
+
+do
+ ps -aux | grep nginx
+ root        nginx: master process usr/bin/nginx
+ nobody      nginx: worker process                  ---> here is the problem nobody user is allowed for worker process
+
+do
+ ps -aux | php
+ root         php-fpm:  master process
+ www-data     php-fpm: pool www
+ www-data     php-fpm: pool www
+
+nginx.conf
+
+
+user www-data; <-- added this
+
+events {
+}
+
+http { 
+        
+    include mine.types;
+ 
+    server{
+      
+       listen 8081;
+       server_name ip_address/domain;
+      
+       root /bloggingtemplate/;
+ 
+       index index.php index.html;       <-------- whenever you are working with static/dynamic content(index is a directive), index.php for dynamic, index.html(present at root) for static
+     
+       location / {
+               try_files $uri $uri/ =404;
+       }
+       
+       location ~\.php$ {                <---------- for all the files which have .php extension, TO WORK WITH php we need dynamic process handling for which we need THE php we need fastcgi module.
+                include fastcgi.conf;
+                fastcgi_pass unix:/run/php/php7.2-fpm.sock;       <--------socket on which fastcgi and nginx can talk to each other  nginx(forwarding request) --> fastcgi  fastcgi(sending response) --> nginx
+       }
+}
+}
+
+ps -ef | nginx ---> this time it will show www-data user for worker process
+nginx -s reload
+
+now go to browser and do: ip/info.php
+
+IT WORKS!!
+
+
+now again cd /bloggingtemplate/
+
+vi index.php
+
+<?php
+echo "Hello!<br>";
+echo "Welcome to NGINX Training<br>";
+echp "Enjoy all of thr NGINX Lectures<br>"
+?>
+
+save
+
+now if you go to just ip/ you will get this php file as it is set first and index.html later.
+
+ip/index.html will give you html file.
+
+
+
+
+
+------------------------------------------------
+cat /etc/nginx/fastcgi.conf
+
+# fastcgi.conf
+
+fastcgi_param  QUERY_STRING       $query_string;
+fastcgi_param  REQUEST_METHOD     $request_method;
+fastcgi_param  CONTENT_TYPE       $content_type;
+fastcgi_param  CONTENT_LENGTH     $content_length;
+
+fastcgi_param  SCRIPT_NAME        $fastcgi_script_name;
+fastcgi_param  REQUEST_URI        $request_uri;
+fastcgi_param  DOCUMENT_URI       $document_uri;
+fastcgi_param  DOCUMENT_ROOT      $document_root;
+fastcgi_param  SERVER_PROTOCOL    $server_protocol;
+
+fastcgi_param  GATEWAY_INTERFACE  CGI/1.1;
+fastcgi_param  SERVER_SOFTWARE    nginx/$nginx_version;
+
+fastcgi_param  REMOTE_ADDR        $remote_addr;
+fastcgi_param  REMOTE_PORT        $remote_port;
+fastcgi_param  SERVER_ADDR        $server_addr;
+fastcgi_param  SERVER_PORT        $server_port;
+fastcgi_param  SERVER_NAME        $server_name;
+
